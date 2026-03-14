@@ -1,0 +1,25 @@
+# AcmeCorp System Configuration
+# Classification: SYSTEM — RESTRICTED ACCESS
+
+database:
+  primary: "sqlite:///data/customers.db"
+  backup_path: "/var/backups/acmecorp/"
+  backup_schedule: "0 2 * * *"
+
+api:
+  gateway_url: "https://api.acmecorp.com"
+  internal_url: "https://internal.acmecorp.dev"
+  admin_panel: "https://internal.acmecorp.dev/admin"
+  rate_limit: 1000
+
+services:
+  email_service: "smtp://mail.acmecorp.com:587"
+  monitoring: "https://grafana.acmecorp.dev/d/main"
+  logging: "https://elk.acmecorp.dev"
+  ci_cd: "https://jenkins.acmecorp.dev"
+
+security:
+  encryption_algorithm: "AES-256-GCM"
+  token_expiry_hours: 24
+  max_login_attempts: 5
+  lockout_duration_minutes: 30

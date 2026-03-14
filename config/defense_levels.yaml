@@ -1,0 +1,117 @@
+# Defense Level Configuration
+# Level 0: No defenses (deliberately vulnerable)
+# Level 1: Basic input filtering
+# Level 2: Authentication + stronger filtering
+# Level 3: Full middleware stack + parameterized queries + ProofLayer
+# Level 4: Maximum security (Haiku judge + dual LLM + strict rate limits)
+
+levels:
+  0:
+    name: "No Defenses"
+    rate_limit_per_minute: 100
+    auth_required: false
+    input_sanitizer: false
+    keyword_blocklist: false
+    regex_filter: false
+    prompt_firewall: false
+    haiku_judge: false
+    parameterized_queries: false
+    result_size_limit: null
+    path_normalization: false
+    rag_safety_filter: false
+    redact_pii_in_response: false
+    system_prompt_protection: false
+    output_classifier: false
+    dual_llm_validation: false
+    behavioral_anomaly_detection: false
+    instruction_hierarchy: false
+    honeypot_tools: false
+    prooflayer_mcp_scan: false
+
+  1:
+    name: "Basic Filtering"
+    rate_limit_per_minute: 60
+    auth_required: false
+    input_sanitizer: true
+    keyword_blocklist: true
+    regex_filter: false
+    prompt_firewall: false
+    haiku_judge: false
+    parameterized_queries: false
+    result_size_limit: null
+    path_normalization: false
+    rag_safety_filter: false
+    redact_pii_in_response: false
+    system_prompt_protection: false
+    output_classifier: false
+    dual_llm_validation: false
+    behavioral_anomaly_detection: false
+    instruction_hierarchy: false
+    honeypot_tools: false
+    prooflayer_mcp_scan: false
+
+  2:
+    name: "Auth + Regex Filtering"
+    rate_limit_per_minute: 30
+    auth_required: true
+    input_sanitizer: true
+    keyword_blocklist: true
+    regex_filter: true
+    prompt_firewall: false
+    haiku_judge: false
+    parameterized_queries: false
+    result_size_limit: 50
+    path_normalization: true
+    rag_safety_filter: false
+    redact_pii_in_response: true
+    system_prompt_protection: false
+    output_classifier: false
+    dual_llm_validation: false
+    behavioral_anomaly_detection: false
+    instruction_hierarchy: false
+    honeypot_tools: false
+    prooflayer_mcp_scan: false
+
+  3:
+    name: "Full Middleware Stack + ProofLayer"
+    rate_limit_per_minute: 15
+    auth_required: true
+    input_sanitizer: true
+    keyword_blocklist: true
+    regex_filter: true
+    prompt_firewall: true
+    haiku_judge: false
+    parameterized_queries: true
+    result_size_limit: 20
+    path_normalization: true
+    rag_safety_filter: true
+    redact_pii_in_response: true
+    system_prompt_protection: true
+    output_classifier: true
+    dual_llm_validation: false
+    behavioral_anomaly_detection: true
+    instruction_hierarchy: true
+    honeypot_tools: true
+    prooflayer_mcp_scan: true
+
+  4:
+    name: "Maximum Security"
+    rate_limit_per_minute: 5
+    auth_required: true
+    input_sanitizer: true
+    keyword_blocklist: true
+    regex_filter: true
+    prompt_firewall: true
+    haiku_judge: true
+    parameterized_queries: true
+    result_size_limit: 10
+    path_normalization: true
+    rag_safety_filter: true
+    redact_pii_in_response: true
+    system_prompt_protection: true
+    output_classifier: true
+    dual_llm_validation: true
+    behavioral_anomaly_detection: true
+    instruction_hierarchy: true
+    honeypot_tools: true
+    prooflayer_mcp_scan: true

@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Opus Target System — Red Team Dashboard</title>
+<style>
+  :root {
+    --bg-primary: #0d1117;
+    --bg-secondary: #161b22;
+    --bg-card: #1c2128;
+    --border: #30363d;
+    --text-primary: #e6edf3;
+    --text-secondary: #8b949e;
+    --accent-green: #3fb950;
+    --accent-red: #f85149;
+    --accent-orange: #d29922;
+    --accent-blue: #58a6ff;
+    --accent-purple: #bc8cff;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+    padding: 24px;
+  }
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  header h1 { font-size: 1.5rem; font-weight: 600; }
+  header .status {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+  header .status .dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent-green);
+    margin-right: 6px;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* ------ Summary Cards ------ */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+  }
+  .card .label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+  }
+  .card .value {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .card .value.green { color: var(--accent-green); }
+  .card .value.red { color: var(--accent-red); }
+  .card .value.orange { color: var(--accent-orange); }
+  .card .value.blue { color: var(--accent-blue); }
+  .card .value.purple { color: var(--accent-purple); }
+
+  /* ------ Sections ------ */
+  .section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+  .section h2 {
+    font-size: 1.1rem;
+    margin-bottom: 16px;
+    color: var(--text-primary);
+  }
+
+  /* ------ Bar chart ------ */
+  .bar-chart { display: flex; flex-direction: column; gap: 12px; }
+  .bar-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .bar-row .bar-label {
+    min-width: 80px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    text-align: right;
+  }
+  .bar-row .bar-track {
+    flex: 1;
+    height: 28px;
+    background: var(--bg-secondary);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+  }
+  .bar-row .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.6s ease;
+    display: flex;
+    align-items: center;
+    padding-left: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #fff;
+    min-width: 40px;
+  }
+  .bar-fill.level-0 { background: var(--accent-red); }
+  .bar-fill.level-1 { background: var(--accent-orange); }
+  .bar-fill.level-2 { background: #e3b341; }
+  .bar-fill.level-3 { background: var(--accent-blue); }
+  .bar-fill.level-4 { background: var(--accent-green); }
+
+  /* ------ Table ------ */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+  th {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 2px solid var(--border);
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 0.75rem;
+  }
+  td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(88, 166, 255, 0.04); }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  .badge.breach { background: rgba(248, 81, 73, 0.2); color: var(--accent-red); }
+  .badge.safe { background: rgba(63, 185, 80, 0.2); color: var(--accent-green); }
+  .badge.refusal { background: rgba(130, 80, 223, 0.15); color: var(--accent-purple); }
+  .badge.error { background: rgba(210, 153, 34, 0.2); color: var(--accent-orange); }
+
+  /* ------ Canary matrix ------ */
+  .canary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 12px;
+  }
+  .canary-item {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px;
+  }
+  .canary-item .token {
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    font-size: 0.8rem;
+    color: var(--accent-red);
+    word-break: break-all;
+  }
+  .canary-item .meta {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-top: 6px;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+  }
+
+  footer {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    margin-top: 40px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Opus Target System &mdash; Red Team Dashboard</h1>
+  <div class="status">
+    <span class="dot"></span>
+    Auto-refresh every 10s &middot; Last updated: <span id="last-updated">--</span>
+  </div>
+</header>
+
+<!-- Summary cards -->
+<div class="summary-grid">
+  <div class="card">
+    <div class="label">Total Attacks</div>
+    <div class="value blue" id="total-attacks">--</div>
+  </div>
+  <div class="card">
+    <div class="label">Breaches</div>
+    <div class="value red" id="total-breaches">--</div>
+  </div>
+  <div class="card">
+    <div class="label">Success Rate</div>
+    <div class="value orange" id="success-rate">--</div>
+  </div>
+  <div class="card">
+    <div class="label">Canary Leaks</div>
+    <div class="value red" id="canary-leaks">--</div>
+  </div>
+  <div class="card">
+    <div class="label">PII Exposed</div>
+    <div class="value red" id="pii-leaks">--</div>
+  </div>
+  <div class="card">
+    <div class="label">Side Effects</div>
+    <div class="value orange" id="side-effects">--</div>
+  </div>
+  <div class="card">
+    <div class="label">Prompt Leaks</div>
+    <div class="value purple" id="prompt-leaks">--</div>
+  </div>
+</div>
+
+<!-- Defense level comparison -->
+<div class="section">
+  <h2>Defense Level Comparison &mdash; Breach Rate</h2>
+  <div class="bar-chart" id="level-chart">
+    <div class="empty-state">Loading data...</div>
+  </div>
+</div>
+
+<!-- Attack timeline -->
+<div class="section">
+  <h2>Attack Timeline</h2>
+  <div style="overflow-x: auto;">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Attack Type</th>
+          <th>Level</th>
+          <th>Result</th>
+          <th>Response</th>
+          <th>Latency</th>
+          <th>ATLAS</th>
+        </tr>
+      </thead>
+      <tbody id="attack-table">
+        <tr><td colspan="7" class="empty-state">Loading data...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Canary leak matrix -->
+<div class="section">
+  <h2>Canary Leak Matrix</h2>
+  <div class="canary-grid" id="canary-matrix">
+    <div class="empty-state">Loading data...</div>
+  </div>
+</div>
+
+<footer>
+  opus-target-system red team harness &middot; dashboard v1.0
+</footer>
+
+<script>
+const DATA_URL = 'campaign_results.json';
+const REFRESH_INTERVAL = 10000;
+
+async function fetchData() {
+  try {
+    const resp = await fetch(DATA_URL + '?t=' + Date.now());
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    return await resp.json();
+  } catch (e) {
+    console.warn('Failed to fetch data:', e);
+    return null;
+  }
+}
+
+function el(id) { return document.getElementById(id); }
+
+function render(data) {
+  if (!data) return;
+
+  const s = data.summary || {};
+  const results = data.results || [];
+
+  // Summary cards
+  el('total-attacks').textContent = s.total_attacks || 0;
+  el('total-breaches').textContent = s.total_breaches || 0;
+  el('success-rate').textContent = (s.success_rate_pct || 0) + '%';
+  el('canary-leaks').textContent = s.canary_leaks || 0;
+  el('pii-leaks').textContent = s.pii_leaks || 0;
+  el('side-effects').textContent = s.side_effects || 0;
+  el('prompt-leaks').textContent = s.prompt_leaks || 0;
+  el('last-updated').textContent = new Date().toLocaleTimeString();
+
+  // Defense level chart
+  const byLevel = {};
+  results.forEach(r => {
+    const lv = r.defense_level || 0;
+    if (!byLevel[lv]) byLevel[lv] = { total: 0, breaches: 0 };
+    byLevel[lv].total++;
+    if (r.verdict && r.verdict.is_breach) byLevel[lv].breaches++;
+  });
+
+  const chartEl = el('level-chart');
+  const levels = Object.keys(byLevel).sort((a, b) => a - b);
+  if (levels.length === 0) {
+    chartEl.innerHTML = '<div class="empty-state">No data yet.</div>';
+  } else {
+    chartEl.innerHTML = levels.map(lv => {
+      const d = byLevel[lv];
+      const pct = d.total > 0 ? Math.round(d.breaches / d.total * 100) : 0;
+      return `
+        <div class="bar-row">
+          <div class="bar-label">Level ${lv}</div>
+          <div class="bar-track">
+            <div class="bar-fill level-${lv}" style="width: ${Math.max(pct, 3)}%">${pct}%</div>
+          </div>
+          <div style="min-width:90px;font-size:0.8rem;color:var(--text-secondary)">
+            ${d.breaches}/${d.total} attacks
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // Attack timeline table
+  const tbody = el('attack-table');
+  if (results.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No attacks recorded.</td></tr>';
+  } else {
+    tbody.innerHTML = results.map((r, i) => {
+      const v = r.verdict || {};
+      const isBreach = v.is_breach;
+      const respType = r.response_type || 'unknown';
+      let badgeClass = 'safe';
+      let badgeText = 'Safe';
+      if (isBreach) { badgeClass = 'breach'; badgeText = 'BREACH'; }
+      else if (respType === 'refusal') { badgeClass = 'refusal'; badgeText = 'Refused'; }
+      else if (respType === 'error') { badgeClass = 'error'; badgeText = 'Error'; }
+
+      const atlas = (v.atlas_techniques || []).join(', ') || '-';
+      const respPreview = (r.response_text || '').substring(0, 80);
+
+      return `
+        <tr>
+          <td>${i + 1}</td>
+          <td>${escHtml(r.attack_type || 'unknown')}</td>
+          <td>${r.defense_level || 0}</td>
+          <td><span class="badge ${badgeClass}">${badgeText}</span></td>
+          <td title="${escHtml(r.response_text || '')}">${escHtml(respPreview)}${r.response_text && r.response_text.length > 80 ? '...' : ''}</td>
+          <td>${(r.latency_ms || 0).toFixed(0)}ms</td>
+          <td style="font-size:0.78rem">${escHtml(atlas)}</td>
+        </tr>`;
+    }).join('');
+  }
+
+  // Canary leak matrix
+  const canaryMap = {};
+  results.forEach(r => {
+    const v = r.verdict || {};
+    (v.canary_leaked || []).forEach(tok => {
+      if (!canaryMap[tok]) canaryMap[tok] = { count: 0, levels: new Set() };
+      canaryMap[tok].count++;
+      canaryMap[tok].levels.add(r.defense_level || 0);
+    });
+  });
+
+  const canaryEl = el('canary-matrix');
+  const canaryKeys = Object.keys(canaryMap);
+  if (canaryKeys.length === 0) {
+    canaryEl.innerHTML = '<div class="empty-state">No canary tokens leaked.</div>';
+  } else {
+    canaryEl.innerHTML = canaryKeys.map(tok => {
+      const c = canaryMap[tok];
+      const lvls = Array.from(c.levels).sort().join(', ');
+      return `
+        <div class="canary-item">
+          <div class="token">${escHtml(tok)}</div>
+          <div class="meta">Leaked ${c.count} time(s) at level(s): ${lvls}</div>
+        </div>`;
+    }).join('');
+  }
+}
+
+function escHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+async function refresh() {
+  const data = await fetchData();
+  if (data) render(data);
+}
+
+refresh();
+setInterval(refresh, REFRESH_INTERVAL);
+</script>
+</body>
+</html>
